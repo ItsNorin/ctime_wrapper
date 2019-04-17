@@ -1,4 +1,11 @@
 #pragma once
+
+// A wrapper for ctime
+
+// Written by ItsNorin
+// https://github.com/ItsNorin
+
+
 #include <ctime>
 #include <string>
 
