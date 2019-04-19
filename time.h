@@ -2,6 +2,10 @@
 #include <ctime>
 #include <string>
 
+// A wrapper for CTime to make it less annoying to use
+// Written by ItsNorin
+// https://github.com/ItsNorin
+
 constexpr const std::tm TIME_ZERO = { 0,0,0, 1,0,0, 0,0,-1 };
 
 namespace Format {
