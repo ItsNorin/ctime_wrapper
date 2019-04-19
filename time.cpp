@@ -1,7 +1,11 @@
 #include "time.h"
-#include "console_prompt/console_prompt.h"
+#include "console_prompt/console_prompt.h" // see https://github.com/ItsNorin/console_prompt
 #include <iostream>
 #include <sstream>
+
+// A wrapper for CTime to make it less annoying to use
+// Written by ItsNorin
+// https://github.com/ItsNorin
 
 // combines two different tms
 // if two values for a given value are positive, will default to a
