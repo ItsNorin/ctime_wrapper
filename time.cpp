@@ -30,50 +30,143 @@ bool operator==(const std::tm &a, const std::tm &b) {
 	return true;
 }
 
-
-
-// converts 24 hour date and time to time_t
-std::time_t mktime(const int month, const int day, const int year, const int hour, const int minute) {
-	std::tm tp = TIME_ZERO;
-	tp.tm_mday = day;
-	tp.tm_mon = month - 1;
-	tp.tm_year = year - 1900;
-	tp.tm_hour = hour;
-	tp.tm_min = minute;
-	return mktime(&tp);
-}
-
 // convert a tm into a duration. only uses hours, minutes, and seconds
 std::time_t mkduration(const std::tm &t) {
 	return (t.tm_hour * 60 + t.tm_min) * 60 + t.tm_sec;
 }
 
-// string in M/D/Y format
-std::string tmToMDY(const std::tm &t) {
-	return std::to_string(t.tm_mon + 1) + '/' + std::to_string(t.tm_mday) + '/' + std::to_string(t.tm_year + 1900);
-}
-// string in HH:MM am/pm format
-std::string tmToHM(const std::tm &t) {
-	char temp[20] = { 0 };
-	std::strftime(temp, 19, "%I:%M %p", &t);
-	return temp;
+// convert seconds to a tm for displaying
+std::tm durationToTm(const std::time_t &t) {
+	std::tm tm = TIME_ZERO;
+	tm.tm_min = t / 60;
+	tm.tm_sec = t % 60;
+	tm.tm_hour = tm.tm_min / 60;
+	tm.tm_min %= 60;
+	return tm;
 }
 
-// M/D/Y format of time_t based on local time
-std::string timeToLocalMDY(const std::time_t &t) {
+// ensures an int takes up at least 2 spaces
+inline std::string to_string_with0(const int i) {
+	return (i < 10) ? ('0' + std::to_string(i)) : (std::to_string(i));
+}
+
+inline std::string fullMonthName(const int month) {
+	static const std::string names[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+	return (0 <= month && month < 12) ? names[month] : "Invalid Month";
+}
+
+inline std::string shortMonthName(const int month) {
+	static const std::string names[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+	return (0 <= month && month < 12) ? names[month] : "Inv";
+}
+
+std::string timeToStr(const std::tm &tm, std::string format) {
+	for (std::size_t i = 0; i < format.size(); i++) {
+		if (format[i] == '%') {
+			char cmd = format[i + 1]; // character after %
+			std::string toIns;
+
+			switch (cmd) {
+				case 'Y': // year as number
+				case 'y': // last 2 digits of year
+					toIns = std::to_string(tm.tm_year + 1900);
+					if (cmd == 'y')
+						toIns = toIns.substr(toIns.size() - 3, 2);
+					break;
+
+				case 'O': // month as decimal with preceeding 0, ex: 03
+					toIns = to_string_with0(tm.tm_mon);
+					break;
+
+				case 'o': // month as decimal
+					toIns = std::to_string(tm.tm_mon);
+					break;
+
+				case 'B': // full month name
+					toIns = fullMonthName(tm.tm_mon);
+					break;
+
+				case 'b': // abbreviated month 
+					toIns = shortMonthName(tm.tm_mon);
+					break;
+
+				case 'D': // day of the month with preceeding 0, ex: 03
+					toIns = to_string_with0(tm.tm_mday);
+					break;
+
+				case 'd': // day of the month
+					toIns = std::to_string(tm.tm_mday);
+					break;
+
+				case 'H': // hour with preceeding 0
+					toIns = to_string_with0(tm.tm_hour);
+					break;
+
+				case 'h': // hour using 12 hour clock
+					toIns = std::to_string(tm.tm_hour - ((tm.tm_hour > 12) ? 12 : 0));
+					break;
+
+				case 'M': // minute with preceeding 0
+					toIns = to_string_with0(tm.tm_min);
+					break;
+
+				case 'm': // minutes without preceeding 0
+					toIns = std::to_string(tm.tm_min);
+					break;
+
+				case 'S': // seconds with preceeding 0
+					toIns = to_string_with0(tm.tm_sec);
+					break;
+
+				case 's': // seconds without preceeding 0
+					toIns = std::to_string(tm.tm_sec);
+					break;
+
+				case 'p':  // whether it is AM or PM, lowercase
+					toIns = (tm.tm_hour > 12) ? "pm" : "am";
+					break;
+
+				case 'P': // whether it is AM or PM
+					toIns = (tm.tm_hour > 12) ? "PM" : "AM";
+					break;
+
+				case 'j': // day of the year
+					toIns = std::to_string(tm.tm_yday);
+					break;
+
+				case '%':
+					toIns = '%';
+					break;
+
+				default: break;
+			}
+			format.insert(i + 2, toIns); // insert after command
+			format.erase(i, 2); // remove original command
+
+			if (toIns.size() > 0) // skip any inserted characters
+				i += toIns.size() - 1;
+		}
+	}
+
+	return format;
+}
+
+std::string strftime(const std::tm &t, const Format::Format &format) {
+	char * temp = new char[format.max_size];
+	std::strftime(temp, format.max_size - 1, format.format_str, &t);
+	std::string done_str = temp;
+	delete[] temp;
+	return done_str;
+}
+
+// formated string of time_t based on local time
+std::string strftimeTimeLocal(const std::time_t &t, const Format::Format &format) {
 	std::tm tm;
 	localtime_s(&tm, &t);
-	std::string str = tmToMDY(tm);
+	std::string str = strftime(tm, format);
 	return str;
 }
 
-// H:M format of time_t based on local time
-std::string timeToLocalHM(const std::time_t &t) {
-	std::tm tm;
-	localtime_s(&tm, &t);
-	std::string str = tmToHM(tm);
-	return str;
-}
 
 
 // extract time from string, returns TIME_ZERO if could not valid time
@@ -153,7 +246,7 @@ std::tm parseDate(std::string input) {
 std::tm tmFromUser(const char *msg, std::tm(*parser)(std::string)) {
 	std::tm tm;
 	do {
-		std::string temp = prompt<std::string>(msg);
+		std::string temp = prompt(msg);
 		tm = parser(temp);
 	} while (tm == TIME_ZERO);
 	return tm;

@@ -1,15 +1,23 @@
 #pragma once
-
-// A wrapper for ctime
-
-// Written by ItsNorin
-// https://github.com/ItsNorin
-
-
 #include <ctime>
 #include <string>
 
-constexpr std::tm TIME_ZERO = { 0,0,0, 1,0,0, 0,0,-1 };
+constexpr const std::tm TIME_ZERO = { 0,0,0, 1,0,0, 0,0,-1 };
+
+namespace Format {
+	struct Format {
+		const char * format_str;
+		const int max_size;
+		Format(const char *format_str, const int max_size) : format_str(format_str), max_size(max_size) {}
+	};
+
+	const Format HH_MM_12("%I:%M", 6);
+	const Format HH_MM_AMPM("%I:%M %p", 12);
+	const Format HH_MM_24("%R", 6);
+	const Format MM_DD_YYYY("%D", 12);
+
+	const std::string hh_mm_apm = "%H:%M %P";
+};
 
 // combines two different tms
 // if two values for a given value are positive, will default to a
@@ -17,32 +25,28 @@ std::tm operator|(const std::tm &a, const std::tm &b);
 
 // see if two tms are identical
 bool operator==(const std::tm &a, const std::tm &b);
-bool operator!=(const std::tm &a, const std::tm &b) { return !(a == b); }
+inline bool operator!=(const std::tm &a, const std::tm &b) { return !(a == b); }
 
-// converts 24 hour date and time to time_t
-std::time_t mktime(const int month, const int day, const int year, const int hour, const int minute);
 // convert a tm into a duration. only uses hours, minutes, and seconds
 std::time_t mkduration(const std::tm &t);
 
+// convert seconds to a tm for displaying
+std::tm durationToTm(const std::time_t &t);
 
-// string in M/D/Y format
-std::string tmToMDY(const std::tm &t);
-// string in HH:MM am/pm format
-std::string tmToHM(const std::tm &t);
+// tm formatter
+std::string timeToStr(const std::tm &tm, std::string format);
 
-// M/D/Y format of time_t based on local time
-std::string timeToLocalMDY(const std::time_t &t);
-// H:M format of time_t based on local time
-std::string timeToLocalHM(const std::time_t &t);
+// tm formatted with strftime
+std::string strftime(const std::tm &t, const Format::Format &format);
 
-
+// formatted string of time_t based on local time with strftime
+std::string strftimeTimeLocal(const std::time_t &t, const Format::Format &format);
 
 // extract time from string, returns TIME_ZERO if could not valid time
 std::tm parseTime(std::string input);
 
 // takes a date in MM/DD/YYYY format
 std::tm parseDate(std::string input);
-
 
 // tm from user parsed by given parser
 std::tm tmFromUser(const char *msg, std::tm(*parser)(std::string));
