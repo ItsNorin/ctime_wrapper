@@ -9,18 +9,10 @@
 constexpr const std::tm TIME_ZERO = { 0,0,0, 1,0,0, 0,0,-1 };
 
 namespace Format {
-	struct Format {
-		const char * format_str;
-		const int max_size;
-		Format(const char *format_str, const int max_size) : format_str(format_str), max_size(max_size) {}
-	};
-
-	const Format HH_MM_12("%I:%M", 6);
-	const Format HH_MM_AMPM("%I:%M %p", 12);
-	const Format HH_MM_24("%R", 6);
-	const Format MM_DD_YYYY("%D", 12);
-
-	const std::string hh_mm_apm = "%H:%M %P";
+	const std::string hh_mm_apm = "%h:%M %P";
+	const std::string hh_mm_24 = "%H:%M";
+	const std::string m_d_yyyy = "%o/%d/%Y";
+	const std::string m_d_yy = "%o/%d/%y";
 };
 
 // combines two different tms
@@ -37,14 +29,13 @@ std::time_t mkduration(const std::tm &t);
 // convert seconds to a tm for displaying
 std::tm durationToTm(const std::time_t &t);
 
+// tm of time_t based on local time
+std::tm timeToLocalTm(const std::time_t &t);
+
 // tm formatter
 std::string timeToStr(const std::tm &tm, std::string format);
 
-// tm formatted with strftime
-std::string strftime(const std::tm &t, const Format::Format &format);
-
-// formatted string of time_t based on local time with strftime
-std::string strftimeTimeLocal(const std::time_t &t, const Format::Format &format);
+inline std::string timeToStr(const std::time_t t, std::string format) { return timeToStr(timeToLocalTm(t), format); }
 
 // extract time from string, returns TIME_ZERO if could not valid time
 std::tm parseTime(std::string input);

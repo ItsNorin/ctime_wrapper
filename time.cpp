@@ -1,11 +1,7 @@
 #include "time.h"
-#include "console_prompt/console_prompt.h" // see https://github.com/ItsNorin/console_prompt
+#include "console_prompt/console_prompt.h"
 #include <iostream>
 #include <sstream>
-
-// A wrapper for CTime to make it less annoying to use
-// Written by ItsNorin
-// https://github.com/ItsNorin
 
 // combines two different tms
 // if two values for a given value are positive, will default to a
@@ -64,6 +60,13 @@ inline std::string shortMonthName(const int month) {
 	return (0 <= month && month < 12) ? names[month] : "Inv";
 }
 
+// tm of time_t based on local time
+std::tm timeToLocalTm(const std::time_t &t) {
+	std::tm tm;
+	localtime_s(&tm, &t);
+	return tm;
+}
+
 std::string timeToStr(const std::tm &tm, std::string format) {
 	for (std::size_t i = 0; i < format.size(); i++) {
 		if (format[i] == '%') {
@@ -102,8 +105,8 @@ std::string timeToStr(const std::tm &tm, std::string format) {
 					toIns = std::to_string(tm.tm_mday);
 					break;
 
-				case 'H': // hour with preceeding 0
-					toIns = to_string_with0(tm.tm_hour);
+				case 'H': // hour using 24 hour clock
+					toIns = std::to_string(tm.tm_hour);
 					break;
 
 				case 'h': // hour using 12 hour clock
@@ -153,22 +156,6 @@ std::string timeToStr(const std::tm &tm, std::string format) {
 	}
 
 	return format;
-}
-
-std::string strftime(const std::tm &t, const Format::Format &format) {
-	char * temp = new char[format.max_size];
-	std::strftime(temp, format.max_size - 1, format.format_str, &t);
-	std::string done_str = temp;
-	delete[] temp;
-	return done_str;
-}
-
-// formated string of time_t based on local time
-std::string strftimeTimeLocal(const std::time_t &t, const Format::Format &format) {
-	std::tm tm;
-	localtime_s(&tm, &t);
-	std::string str = strftime(tm, format);
-	return str;
 }
 
 
